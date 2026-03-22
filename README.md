@@ -205,7 +205,6 @@ top_language: C
 
 ## 📌 Future Improvements
 
-* GitHub API authentication (to avoid rate limits)
 * Support for organization repositories
 * Filtering by language or stars
 * Sorting options (top repos, newest repos)
