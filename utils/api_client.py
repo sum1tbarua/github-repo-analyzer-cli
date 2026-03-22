@@ -7,18 +7,16 @@ Handles:
 - retry logic
 """
 import requests, time, os
-
-BASE_URL = "https://api.github.com"
+from utils.config import *
 
 def build_headers():
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "github-repo-analyzer-cli"
+        "User-Agent": USER_AGENT
     }
-    token = os.getenv("GITHUB_TOKEN")
     
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
     
     return headers
 
@@ -31,7 +29,6 @@ def fetch_repos_page(username, page, per_page=100):
     headers = build_headers()
     if not headers:
         return None
-    MAX_RETRIES = 3
     
     for attempt in range(MAX_RETRIES):
         try:
@@ -39,7 +36,7 @@ def fetch_repos_page(username, page, per_page=100):
                 url,
                 headers=headers, 
                 params=params, 
-                timeout=5
+                timeout=DEFAULT_TIMEOUT
             )
             if response.status_code == 200:
                 try:
