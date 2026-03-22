@@ -2,7 +2,8 @@
 import os
 
 BASE_URL = "https://api.github.com"
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 DEFAULT_TIMEOUT = 5
-USER_AGENT = "auth-inspector-cli"
+DEFAULT_PER_PAGE = 100
 MAX_RETRIES = 3
+USER_AGENT = "auth-inspector-cli"
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")

@@ -20,7 +20,7 @@ def build_headers():
     
     return headers
 
-def fetch_repos_page(username, page, per_page=100):
+def fetch_repos_page(username, page, per_page=DEFAULT_PER_PAGE):
     url = f"{BASE_URL}/users/{username}/repos"
     params = {
         "page": page,
