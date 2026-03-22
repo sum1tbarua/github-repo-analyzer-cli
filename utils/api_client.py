@@ -2,23 +2,45 @@
 """
 Handles:
 - GitHub API calls
+- authentication
 - pagination
 - retry logic
 """
-import requests, time
+import requests, time, os
 
-BASE_URL = "https://api.github.com/users"
+BASE_URL = "https://api.github.com"
+
+def build_headers():
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "github-repo-analyzer-cli"
+    }
+    token = os.getenv("GITHUB_TOKEN")
+    
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    
+    return headers
 
 def fetch_repos_page(username, page, per_page=100):
-    url = f"{BASE_URL}/{username}/repos"
+    url = f"{BASE_URL}/users/{username}/repos"
     params = {
         "page": page,
         "per_page": per_page,
     }
+    headers = build_headers()
+    if not headers:
+        return None
     MAX_RETRIES = 3
+    
     for attempt in range(MAX_RETRIES):
         try:
-            response = requests.get(url, params=params, timeout=5)
+            response = requests.get(
+                url,
+                headers=headers, 
+                params=params, 
+                timeout=5
+            )
             if response.status_code == 200:
                 try:
                     data = response.json()
@@ -29,6 +51,15 @@ def fetch_repos_page(username, page, per_page=100):
                     print("Unexpected API response format")
                     return None
                 return data
+            elif response.status_code == 401:
+                print("Authentication failed. Check your GitHub token.")
+                return None
+            elif response.status_code == 404:
+                print(f"User '{username}' not found.")
+                return None
+            elif response.status_code == 403:
+                print("Forbidden or rate limited by GitHub.")
+                return None
             elif response.status_code >= 500:
                 print(f"Server Error: {response.status_code}. Retrying...")
             else:
@@ -42,7 +73,7 @@ def fetch_repos_page(username, page, per_page=100):
             delay = 2 ** attempt
             print(f"Retrying in {delay} seconds...")
             time.sleep(delay)
-        print(f"Failed to fetch page {page} after {MAX_RETRIES} attempts.")
+    print(f"Failed to fetch page {page} after {MAX_RETRIES} attempts.")
     return None
 
 

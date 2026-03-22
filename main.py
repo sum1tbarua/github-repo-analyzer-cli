@@ -3,7 +3,7 @@ from utils.api_client import fetch_all_repos
 from utils.formatter import print_repos, print_summary
 from toolkit.analyzer import analyze_repos
 from utils.file_handler import export_to_json
-import argparse
+import argparse, os
 
 def main():
     parser = argparse.ArgumentParser(
@@ -16,6 +16,11 @@ def main():
 
     args = parser.parse_args()
     data = fetch_all_repos(args.user)
+    
+    if os.getenv("GITHUB_TOKEN"):
+        print("Using authenticated requests")
+    else:
+        print("Warning: running without token (limited rate)")
     
     if data is None:
         print("Failed to fetch repository data.")
