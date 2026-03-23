@@ -5,8 +5,13 @@ from toolkit.analyzer import analyze_repos
 from utils.file_handler import export_to_json
 from utils.config import GITHUB_TOKEN
 import argparse, os
+import logging
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     parser = argparse.ArgumentParser(
         description="GitHub Repo Analyzer CLI"
     )
@@ -19,23 +24,23 @@ def main():
     data = fetch_all_repos(args.user)
     
     if GITHUB_TOKEN:
-        print("Using authenticated requests")
+        logging.info("Using authenticated requests")
     else:
-        print("Warning: running without token (limited rate)")
+        logging.warning("Running without token (limited rate)")
     
     if data is None:
-        print("Failed to fetch repository data.")
+        logging.error("Failed to fetch repository data.")
         return
 
     if not data:
-        print("No repositories found.")
+        logging.error("No repositories found.")
         return
     print_repos(data, args.limit)
     
     if args.summary:
         summary = analyze_repos(data)
         if summary is None:
-            print("No summary data found.")
+            logging.error("No summary data found.")
         print_summary(summary)
     
     if args.export:
