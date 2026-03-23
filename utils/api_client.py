@@ -3,11 +3,13 @@
 Handles:
 - GitHub API calls
 - authentication
+- rate limit validation
 - pagination
 - retry logic
 """
 import requests, time, os
 from utils.config import *
+from datetime import datetime
 
 def build_headers():
     headers = {
@@ -19,6 +21,21 @@ def build_headers():
         headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
     
     return headers
+
+def extract_rate_limit_info(response):
+    limit = response.headers.get("X-RateLimit-Limit")
+    remaining = response.headers.get("X-RateLimit-Remaining")
+    reset = response.headers.get("X-RateLimit-Reset")
+    
+    reset_readable = "unknown"
+    if reset and str(reset).isdigit():
+        reset_readable = datetime.fromtimestamp(int(reset)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    return {
+        "limit": limit,
+        "remaining": remaining,
+        "reset": reset_readable
+    }
 
 def fetch_repos_page(username, page, per_page=DEFAULT_PER_PAGE):
     url = f"{BASE_URL}/users/{username}/repos"
@@ -55,7 +72,14 @@ def fetch_repos_page(username, page, per_page=DEFAULT_PER_PAGE):
                 print(f"User '{username}' not found.")
                 return None
             elif response.status_code == 403:
-                print("Forbidden or rate limited by GitHub.")
+                rate_info = extract_rate_limit_info(response)
+                if rate_info["remaining"] == "0":
+                    print("Github Rate Limit Exceeded.")
+                    print(f"Limit: {rate_info['limit']}")
+                    print(f"Remaining: {rate_info['remaining']}")
+                    print(f"Reset: {rate_info['reset']}")
+                else:
+                    print("Forbidden Request by GitHub.")
                 return None
             elif response.status_code >= 500:
                 print(f"Server Error: {response.status_code}. Retrying...")
