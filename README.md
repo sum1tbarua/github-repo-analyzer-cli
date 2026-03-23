@@ -208,7 +208,6 @@ top_language: C
 * Support for organization repositories
 * Filtering by language or stars
 * Sorting options (top repos, newest repos)
-* Logging instead of print statements
 * Unit tests
 * Packaging as an installable CLI tool
 
