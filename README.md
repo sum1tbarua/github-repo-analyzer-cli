@@ -216,7 +216,10 @@ top_language: C
 ## 👤 Author
 
 **Sumit Barua**
-M.S. Computer Science, Western Michigan University
+
+M.S. Computer Science 
+
+Western Michigan University
 
 ---
 
