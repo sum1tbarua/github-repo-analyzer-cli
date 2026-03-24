@@ -9,6 +9,7 @@ Handles:
 """
 import requests, time, os
 from utils.config import *
+from utils.exceptions import *
 from datetime import datetime
 
 def build_headers():
@@ -65,27 +66,25 @@ def fetch_repos_page(username, page, per_page=DEFAULT_PER_PAGE):
                     print("Unexpected API response format")
                     return None
                 return data
-            elif response.status_code == 401:
-                print("Authentication failed. Check your GitHub token.")
-                return None
-            elif response.status_code == 404:
+            if response.status_code == 401:
+                raise GitHubAuthError("Authentication failed. Missing or invalid GitHub token.")
+            if response.status_code == 404:
                 print(f"User '{username}' not found.")
                 return None
-            elif response.status_code == 403:
+            if response.status_code == 403:
                 rate_info = extract_rate_limit_info(response)
                 if rate_info["remaining"] == "0":
-                    print("Github Rate Limit Exceeded.")
-                    print(f"Limit: {rate_info['limit']}")
-                    print(f"Remaining: {rate_info['remaining']}")
-                    print(f"Reset: {rate_info['reset']}")
-                else:
-                    print("Forbidden Request by GitHub.")
-                return None
-            elif response.status_code >= 500:
+                    raise GitHubRateLimitError(
+                        f"GitHub rate limit exceeded. Try again at {rate_info['reset']}."
+                    )
+                raise GitHubUnexpectedError(
+                        f"GitHub rejected the request with status {response.status_code}"
+                    )
+            if response.status_code >= 500:
                 print(f"Server Error: {response.status_code}. Retrying...")
-            else:
-                print(f"Permanent Error Occurred: {response.status_code}")
-                return None
+            raise GitHubUnexpectedError(
+                f"Unexpected GitHub response: {response.status_code}"
+            )
         except requests.exceptions.Timeout:
             print("Timeout occurred. Retrying...")
         except requests.exceptions.ConnectionError:
